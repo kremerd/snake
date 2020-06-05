@@ -54,10 +54,30 @@ export class FieldTraverser {
 
   private visit({ pos, dist, prev }: VisitSpec): void {
     this.visitedWithPrev.set(pos, prev);
-    this.traversalQueue.push({ pos: pos + 1, dist: dist + 1, prev: pos });
-    this.traversalQueue.push({ pos: pos - 1, dist: dist + 1, prev: pos });
-    this.traversalQueue.push({ pos: pos + FieldTraverser.FIELD_WIDTH, dist: dist + 1, prev: pos });
-    this.traversalQueue.push({ pos: pos - FieldTraverser.FIELD_WIDTH, dist: dist + 1, prev: pos });
+    this.traversalQueue.push({ pos: this.goRight(pos), dist: dist + 1, prev: pos });
+    this.traversalQueue.push({ pos: this.goLeft(pos), dist: dist + 1, prev: pos });
+    this.traversalQueue.push({ pos: this.goDown(pos), dist: dist + 1, prev: pos });
+    this.traversalQueue.push({ pos: this.goUp(pos), dist: dist + 1, prev: pos });
+  }
+
+  private goRight(pos: number): number {
+    return (pos + 1) % FieldTraverser.FIELD_WIDTH + // x coordinate
+      Math.floor(pos / FieldTraverser.FIELD_WIDTH) * FieldTraverser.FIELD_WIDTH; // y coordinate
+  }
+
+  private goLeft(pos: number): number {
+    return (pos + FieldTraverser.FIELD_WIDTH - 1) % FieldTraverser.FIELD_WIDTH + // x coordinate
+      Math.floor(pos / FieldTraverser.FIELD_WIDTH) * FieldTraverser.FIELD_WIDTH; // y coordinate
+  }
+
+  private goDown(pos: number): number {
+    return (pos + FieldTraverser.FIELD_WIDTH) %
+      (FieldTraverser.FIELD_WIDTH * FieldTraverser.FIELD_HEIGHT);
+  }
+
+  private goUp(pos: number): number {
+    return (pos + (FieldTraverser.FIELD_HEIGHT - 1) * FieldTraverser.FIELD_WIDTH) %
+      (FieldTraverser.FIELD_WIDTH * FieldTraverser.FIELD_HEIGHT);
   }
 
   private reconstructPathTo(dest: number): SnakeDirection[] {
@@ -78,12 +98,16 @@ export class FieldTraverser {
   private getDirection(prev: number, cur: number): SnakeDirection {
     switch (cur - prev) {
       case 1:
+      case -FieldTraverser.FIELD_WIDTH + 1:
         return SnakeDirection.right;
       case -1:
+      case FieldTraverser.FIELD_WIDTH - 1:
         return SnakeDirection.left;
       case FieldTraverser.FIELD_WIDTH:
+      case (-FieldTraverser.FIELD_HEIGHT + 1) * FieldTraverser.FIELD_WIDTH:
         return SnakeDirection.down;
       case -FieldTraverser.FIELD_WIDTH:
+      case (FieldTraverser.FIELD_HEIGHT - 1) * FieldTraverser.FIELD_WIDTH:
         return SnakeDirection.up;
       default:
         throw Error(`Invalid movement detected: ${prev} to ${cur}.`);
