@@ -7,7 +7,7 @@ export class CustomStrategy implements Strategy {
 
   step(context: Context): SnakeDirection {
     const traverser = new FieldTraverser();
-    const directions = traverser.getDirections(context.snake.parts[0], context.fruit);
+    const directions = traverser.getDirections(context.snake.parts[0], context.fruit, context.obstacles);
     return directions[0];
   }
 }
@@ -26,10 +26,12 @@ export class FieldTraverser {
 
   constructor() { }
 
-  getDirections(start: Position, dest: Position): SnakeDirection[] {
+  getDirections(start: Position, dest: Position, obstacles: Position[]): SnakeDirection[] {
     const startPrimitive = this.asPrimitive(start);
     const destPrimitive = this.asPrimitive(dest);
-    this.traverse(startPrimitive, destPrimitive);
+    const obstaclePrimitives = obstacles.map(obstacle => this.asPrimitive(obstacle));
+
+    this.traverse(startPrimitive, destPrimitive, obstaclePrimitives);
     return this.reconstructPathTo(destPrimitive);
   }
 
@@ -37,9 +39,9 @@ export class FieldTraverser {
     return pos.x + pos.y * FieldTraverser.FIELD_WIDTH;
   }
 
-  private traverse(start: number, dest: number): VisitSpec {
+  private traverse(start: number, dest: number, obstacles: number[]): VisitSpec {
     this.traversalQueue = [{ pos: start, dist: 0, prev: null }];
-    this.visitedWithPrev = new Map();
+    this.visitedWithPrev = new Map(obstacles.map(x => [x, null]));
 
     while (true) {
       let spec = this.traversalQueue.shift();
