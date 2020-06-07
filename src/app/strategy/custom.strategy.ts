@@ -7,7 +7,8 @@ export class CustomStrategy implements Strategy {
 
   step(context: Context): SnakeDirection {
     const traverser = new FieldTraverser();
-    const directions = traverser.getDirections(context.snake.parts[0], context.fruit, context.obstacles);
+    const obstacles = [...context.obstacles, ...context.snake.parts.slice(1)];
+    const directions = traverser.getDirections(context.snake.parts[0], context.fruit, obstacles);
     return directions[0];
   }
 }
@@ -31,8 +32,13 @@ export class FieldTraverser {
     const destPrimitive = this.asPrimitive(dest);
     const obstaclePrimitives = obstacles.map(obstacle => this.asPrimitive(obstacle));
 
-    this.traverse(startPrimitive, destPrimitive, obstaclePrimitives);
-    return this.reconstructPathTo(destPrimitive);
+    try {
+      this.traverse(startPrimitive, destPrimitive, obstaclePrimitives);
+      return this.reconstructPathTo(destPrimitive);
+    } catch (err) {
+      const lastVisited = Array.from(this.visitedWithPrev)[this.visitedWithPrev.size - 1][0];
+      return this.reconstructPathTo(lastVisited);
+    }
   }
 
   private asPrimitive(pos: Position): number {
@@ -45,6 +51,9 @@ export class FieldTraverser {
 
     while (true) {
       let spec = this.traversalQueue.shift();
+      if (spec === undefined) {
+        throw new Error('Found no valid path');
+      }
       if (!this.visitedWithPrev.has(spec.pos)) {
         this.visit(spec);
       }
